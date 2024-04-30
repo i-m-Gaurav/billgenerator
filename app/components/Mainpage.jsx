@@ -8,32 +8,35 @@ const Mainpage = () => {
         setInputValue(e.target.value)
     }
 
-    const handleGenerateClick = () => {
-        fetch('/api/generatePdf')
-            .then(response => response.arrayBuffer())
-            .then(buffer => {
-                // Create a Blob from the array buffer
-                const blob = new Blob([buffer], { type: 'application/pdf' });
-    
-                // Create a temporary URL for the blob
-                const url = URL.createObjectURL(blob);
-    
-                // Create a link element and set its attributes
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'generated.pdf';
-    
-                // Programmatically click the link to trigger the download
-                link.click();
-    
-                // Clean up the temporary URL
-                URL.revokeObjectURL(url);
-            })
-            .catch(error => {
-                // Handle any errors that occurred during the request
-                console.error(error);
-            });
-    }
+    const handleGenerateClick = async () => {
+        try {      
+          const response = await fetch('/api/generatePdf', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ inputValue }),
+          });
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
+          const buffer = await response.arrayBuffer();
+          const blob = new Blob([buffer], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+      
+          // Open the PDF in a new tab
+          const newWindow = window.open('', '_blank');
+          newWindow.location.href = url;
+      
+          // Clean up the temporary URL
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          // Handle any errors that occurred during the request
+        }
+      };
     
 
     return (
